@@ -90,7 +90,7 @@ class TrafficController extends Controller {
 	public function getAbstract()
 	{
 		$from = Request::input('from');
-		$to = Request::input('');
+		$to = Request::input('to');
 
 		$ak = 'ODpkCUvU6ICbiOikmOpm9H8Q'; 
 		$sk = 'Rnjba5qwj6DkQIm9OnNGFAch0puiWbhn';
