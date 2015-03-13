@@ -41,6 +41,15 @@ class ToolUtil
         return $resp;
     }
 
+    static public function getContent($request){
+        $rawStr = $request->getContent();
+        $encoding = $request->header('Content-Encoding');
+        if ($encoding == "gzip") {
+            return gzdecode($rawStr);
+        }
+        return $rawStr;
+    }
+
     static public function toDateTime($unixTimestamp){
         return date("Y-m-d H:m:s", $unixTimestamp);
     }

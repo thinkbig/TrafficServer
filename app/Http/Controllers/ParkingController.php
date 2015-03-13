@@ -90,7 +90,7 @@ class ParkingController extends Controller {
         }
 
         $request = Request::instance();
-        $jsonStr = $request->getContent();
+        $jsonStr = ToolUtil::getContent($request);
         $jsonObj = json_decode($jsonStr);
         $dna = md5($jsonStr);
 

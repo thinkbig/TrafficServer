@@ -84,7 +84,7 @@ class UserController extends Controller {
     public function postWakeup()
     {
         $request = Request::instance();
-        $jsonStr = $request->getContent();
+        $jsonStr = ToolUtil::getContent($request);
         $jsonObj = json_decode($jsonStr);
 
         $udid = isset($jsonObj->udid) ? $jsonObj->udid : null;

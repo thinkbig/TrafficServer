@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers;
 
+use Request;
+use App\Utils\ToolUtil;
+
 class WelcomeController extends Controller {
 
 	/*
@@ -32,5 +35,19 @@ class WelcomeController extends Controller {
 	{
 		return view('welcome');
 	}
+
+    public function postGzip()
+    {
+        $request = Request::instance();
+        $jsonGzip = $request->getContent();
+        $jsonStr = gzdecode($jsonGzip);
+
+        $rawLen = strlen($jsonGzip);
+        $len = strlen($jsonStr);
+        $encoding = $request->header('Content-Encoding');
+        $type = $request->header('Content-Type');
+
+        return ToolUtil::makeResp(["len1" => $rawLen, "len2" => $len, "encoding" => $encoding, "type" => $type]);
+    }
 
 }

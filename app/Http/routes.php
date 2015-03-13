@@ -12,6 +12,7 @@
 */
 
 Route::get('/', 'WelcomeController@index');
+Route::post('welcome/gzip', 'WelcomeController@postGzip');
 
 Route::get('home', 'HomeController@index');
 

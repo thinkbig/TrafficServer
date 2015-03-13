@@ -36,4 +36,5 @@ class CreateTripdetailsTable extends Migration {
 		Schema::drop('tripdetails');
 	}
 
+    
 }

@@ -91,7 +91,7 @@ class TripController extends Controller {
         }
 
         $request = Request::instance();
-        $jsonStr = $request->getContent();
+        $jsonStr = ToolUtil::getContent($request);
         $jsonObj = json_decode($jsonStr);
         $dna = md5($jsonStr);
 
@@ -156,7 +156,7 @@ class TripController extends Controller {
         // 这里将来要加验证，否则上报就没有限制，很容易被脏数据攻击
         $tid = Request::input('tid');
         $request = Request::instance();
-        $jsonStr = $request->getContent();
+        $jsonStr = ToolUtil::getContent($request);
         if (null == $tid || strlen($jsonStr) < 10) {
             return ToolUtil::makeResp(null, -1);
         }
