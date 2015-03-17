@@ -34,4 +34,14 @@ return [
 		'secret' => '',
 	],
 
+    'baidu' => [
+        'base_url'  => 'http://api.map.baidu.com',
+        'res_navigation' => '/telematics/v3/navigation',
+        'res_viaPath' => '/telematics/v3/viaPath',
+
+        'coor_gps' => 'wgs84',
+        'coor_mars' => 'gcj02',
+        'coor_baidu' => 'bd09ll',
+    ],
+
 ];

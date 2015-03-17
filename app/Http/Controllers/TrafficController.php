@@ -2,7 +2,12 @@
 
 use Httpful;
 use Request;
+use Config;
 use App\Utils\ToolUtil;
+use App\Utils\ErrUtil;
+
+
+// bd09ll表示百度经纬度坐标，bd09mc表示百度墨卡托坐标，gcj02表示经过国测局加密的坐标，wgs84表示gps获取的坐标。
 
 
 class TrafficController extends Controller {
@@ -92,12 +97,10 @@ class TrafficController extends Controller {
 		$from = Request::input('from');
 		$to = Request::input('to');
 
-		$ak = 'ODpkCUvU6ICbiOikmOpm9H8Q'; 
-		$sk = 'Rnjba5qwj6DkQIm9OnNGFAch0puiWbhn';
- 
 		//http://developer.baidu.com/map/index.php?title=car/api/driving
-		$base_url = "http://api.map.baidu.com";
-		$res_path = "/telematics/v3/navigation";
+		$bd_config = Config::get('services.baidu');
+        $base_url = $bd_config['base_url'];
+		$res_path = $bd_config['res_navigation'];
 		$output = "json";
 		$from_coor = "bd09ll";
 		$to_coor = "bd09ll";
@@ -109,12 +112,10 @@ class TrafficController extends Controller {
 			'output' => $output,
 			'coord_type' => $from_coor,
 			'out_coord_type' => $to_coor,
-			'ak' => $ak,
 			'region' => $region,
 		);
 
-		$sn = $this->caculateAKSN($sk, $res_path, $querystring_arrays);
-		$querystring_arrays['sn'] = $sn;
+        $querystring_arrays = ToolUtil::modifyRequestByBaiduKey($res_path, $querystring_arrays);
 		$querystring = http_build_query($querystring_arrays, null, "&");
 
 		$target = $base_url . $res_path . '?' . $querystring;
@@ -128,12 +129,59 @@ class TrafficController extends Controller {
 		return ToolUtil::makeResp('服务异常，请稍后再试', -1);
 	}
 
-	public function caculateAKSN($sk, $res_path, $querystring_arrays, $method = 'GET')
-	{  
-    	if ($method === 'POST'){  
-        	ksort($querystring_arrays);  
-    	}  
-    	$querystring = http_build_query($querystring_arrays);  
-    	return md5(urlencode($res_path.'?'.$querystring.$sk));  
-	}
+    public function postTrafficlight()
+    {
+        $request = Request::instance();
+        $jsonStr = ToolUtil::getContent($request);
+        $jsonObj = json_decode($jsonStr);
+
+        $from = (isset($jsonObj->from) ? $jsonObj->from : null);
+        $to = (isset($jsonObj->to) ? $jsonObj->to : null);
+        if (null == $from || null == $to) {
+            return ErrUtil::errResp(ErrUtil::err_bad_parameters);
+        }
+        $in_coor = (isset($jsonObj->in_coor) ? $jsonObj->in_coor : "coor_gps");
+        $out_coor = (isset($jsonObj->out_coor) ? $jsonObj->out_coor : "coor_baidu");
+
+        //http://developer.baidu.com/map/index.php?title=car/api/road
+        $bd_config = Config::get('services.baidu');
+        $base_url = $bd_config['base_url'];
+        $res_path = $bd_config['res_viaPath'];
+        $output = "json";
+        $from_coor = $bd_config[$in_coor];
+        $to_coor = $bd_config[$out_coor];
+
+        if (null == $from_coor || null == $to_coor) {
+            return ErrUtil::errResp(ErrUtil::err_bad_parameters);
+        }
+
+        $querystring_arrays = array (
+            'origin' => $from,
+            'destination' => $to,
+            'output' => $output,
+            'coord_type' => $from_coor,
+            'out_coord_type' => $to_coor,
+        );
+
+        $querystring_arrays = ToolUtil::modifyRequestByBaiduKey($res_path, $querystring_arrays);
+        $querystring = http_build_query($querystring_arrays, null, "&");
+
+        $target = $base_url . $res_path . '?' . $querystring;
+        $response = Httpful::get($target)->expectsJson()->send();
+        if (200 == $response->code) {
+            $result = $response->body->results;
+            $trafficLight = isset($result->trafficLight) ? $result->trafficLight : null;
+            $lights = array();
+            foreach ($trafficLight as $light) {
+                $location = isset($light->location) ? $light->location : null;
+                if (isset($location->lng) && isset($location->lat)) {
+                    $lights[] = ['lon' => $location->lng, 'lat' => $location->lat];
+                }
+            }
+
+            return ToolUtil::makeResp(['coor' => 'coor_baidu', 'trafficlights' => $lights]);
+        }
+
+        return ErrUtil::errResp(ErrUtil::err_general);
+    }
 }

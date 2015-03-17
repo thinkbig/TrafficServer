@@ -54,4 +54,29 @@ class ToolUtil
         return date("Y-m-d H:m:s", $unixTimestamp);
     }
 
+
+    // helper functions for baidu api
+    static public function getBaiduKey() {
+        $ak = 'ODpkCUvU6ICbiOikmOpm9H8Q';
+        $sk = 'Rnjba5qwj6DkQIm9OnNGFAch0puiWbhn';
+        return array($ak, $sk);
+    }
+
+    static public function modifyRequestByBaiduKey($res_path, $querystring_arrays, $method = 'GET')
+    {
+        list($ak, $sk) = self::getBaiduKey();
+
+        $querystring_arrays['ak'] = $ak;
+        if ($method === 'POST'){
+            ksort($querystring_arrays);
+        }
+        $querystring = http_build_query($querystring_arrays);
+        $sn = md5(urlencode($res_path.'?'.$querystring.$sk));
+
+        $querystring_arrays['sn'] = $sn;
+
+        return $querystring_arrays;
+    }
+
+
 }
