@@ -16,43 +16,49 @@ class UserSeeder extends Seeder {
     public function run()
     {
         $udid = "test_device_0000001";
-        $uid = "test_user_0000001";
+        $uidStr = "test_user_0000001";
         $cid = "test_car_0000001";
 
-        Device::updateOrCreate(array('udid' => $udid), array(
-            'udid'     => $udid,
-            'user_id' => $uid,
-            'device_type'    => Device::IOS,
-            'device_token' => "",
-            'version' => 1,     // 1.0.0
-            'source'    => Device::Internal,
-            'device_info' => "Tao's iPhone Fake",
-            'country_code' => 'CN'
-        ));
+        // add seeding user
+        $userObj = User::firstOrNew(['user_string' => $uidStr]);
+        $userObj->latest_device = $udid;
+        $userObj->latest_car = $cid;
+        $userObj->name = 'Thinkbig';
+        $userObj->email = '87149798@qq.com';
+        $userObj->phone = '17095011032';
+        $userObj->password = 'fakeanddefaultpassword';
+        $userObj->intro = '测试账号';
+        $userObj->experience = 0;
 
-        Car::updateOrCreate(array('cid' => $cid), array(
-            'cid'     => $cid,
-            'user_id' => $uid,
-            'car_no'  => '苏E23Y51',
-            'license_no' => "",
-            'engine_no' => "",
-            'car_company' => "大众",
-            'car_brand' => "斯柯达",
-            'date_buy' => new \DateTime('2009-07-01'),
-            'car_info' => "橙色，1.4排量，自动挡",
-        ));
+        $userObj->save();
 
-        User::updateOrCreate(array('uid' => $uid), array(
-            'uid'     => $uid,
-            'latest_device' => $udid,
-            'latest_car' => $cid,
-            'name'  => 'Thinkbig',
-            'email' => "87149798@qq.com",
-            'phone' => "17095011032",
-            'password' => "fakeanddefaultpassword",
-            'intro' => "测试账号",
-            'experience' => 0,
-        ));
+        $uid = $userObj->id;
+
+        // add seeding device
+        $deviceObj = Device::firstOrNew(['udid' => $udid]);
+        $deviceObj->user_id = $uid;
+        $deviceObj->device_type = Device::IOS;
+        $deviceObj->device_token = '';
+        $deviceObj->version = 1;
+        $deviceObj->source = Device::Internal;
+        $deviceObj->device_info = "Tao's iPhone Fake";
+        $deviceObj->country_code = 'CN';
+
+        $deviceObj->save();
+
+        // add seeding car
+        $carObj = Car::firstOrNew(['cid' => $cid]);
+        $carObj->user_id = $uid;
+        $carObj->car_no = '苏E23Y51';
+        $carObj->license_no = '';
+        $carObj->engine_no = '';
+        $carObj->car_company = '大众';
+        $carObj->car_brand = '斯柯达';
+        $carObj->date_buy = new \DateTime('2009-07-01');
+        $carObj->car_info = '橙色，1.4排量，自动挡';
+
+        $carObj->save();
+
     }
 
 }

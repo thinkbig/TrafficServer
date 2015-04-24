@@ -39,9 +39,9 @@ return [
         'res_navigation' => '/telematics/v3/navigation',
         'res_viaPath' => '/telematics/v3/viaPath',
 
-        'coor_gps' => 'wgs84',
-        'coor_mars' => 'gcj02',
-        'coor_baidu' => 'bd09ll',
+        'gps' => 'wgs84',
+        'mars' => 'gcj02',
+        'baidu' => 'bd09ll',
     ],
 
 ];

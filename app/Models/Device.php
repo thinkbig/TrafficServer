@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Device extends Model {
 
-    protected $table = 'devices';
+    protected $table = 'web_devices';
     protected $connection = 'cm_user';
     protected static $unguarded = true;
 

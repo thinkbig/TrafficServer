@@ -4,6 +4,7 @@ use Request;
 use Response;
 use App\Models\Device;
 use App\Utils\ToolUtil;
+use App\Utils\ErrUtil;
 
 class UserController extends Controller {
 
@@ -90,31 +91,25 @@ class UserController extends Controller {
         $udid = isset($jsonObj->udid) ? $jsonObj->udid : null;
         $verify_key = isset($jsonObj->verify_key) ? $jsonObj->verify_key : null;
 
-        $calVeryKey = md5($udid . "&eof|w>/>4>4;B3");
+        $calVeryKey = md5($udid . "&101111102124119624762526252596651");
         if ($verify_key != $calVeryKey) {
-            return ToolUtil::makeResp(null, -1);
+            return ErrUtil::errResp(ErrUtil::err_authorize);
         }
 
-        // updateOrCreate method will not update the updated_at column if nothing changed
-        $newAttr = array(
-            'udid'     => $udid,
-            'user_id' => (isset($jsonObj->user_id) ? $jsonObj->user_id : null),
-            'device_type'    => (isset($jsonObj->device_type) ? $jsonObj->device_type : 0),
-            'device_token' => (isset($jsonObj->device_token) ? $jsonObj->device_token : null),
-            'version' => (isset($jsonObj->version) ? $jsonObj->version : 0),
-            'source'    => (isset($jsonObj->source) ? $jsonObj->source : 0),
-            'device_info' => (isset($jsonObj->device_info) ? $jsonObj->device_info : null),
-            'country_code' => (isset($jsonObj->country_code) ? $jsonObj->country_code : null)
-        );
-        $modelBuilder = Device::where(array('udid' => $udid));
-        $model = $modelBuilder->first();
-        if ($model) {
-            $modelBuilder->update($newAttr);
-        } else {
-            Device::create($newAttr);
-        }
+        $deviceObj = Device::firstOrNew(['udid' => $udid]);
+        $deviceObj->user_id = (isset($jsonObj->user_id) ? $jsonObj->user_id : null);
+        $deviceObj->device_type = (isset($jsonObj->device_type) ? $jsonObj->device_type : 0);
+        $deviceObj->device_token = (isset($jsonObj->device_token) ? $jsonObj->device_token : null);
+        $deviceObj->version = (isset($jsonObj->version) ? $jsonObj->version : 0);
+        $deviceObj->source = (isset($jsonObj->source) ? $jsonObj->source : 0);
+        $deviceObj->device_info = (isset($jsonObj->device_info) ? $jsonObj->device_info : null);
+        $deviceObj->country_code = (isset($jsonObj->country_code) ? $jsonObj->country_code : null);
+        $deviceObj->touch();        // 即使数据没有变化，也要更新最近active的时间
 
-        return ToolUtil::makeResp(null);
+        if ($deviceObj->save()) {
+            return ToolUtil::makeResp(null);
+        }
+        return ErrUtil::errResp(ErrUtil::err_general);
     }
 
 }

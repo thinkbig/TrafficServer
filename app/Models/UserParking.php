@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserParking extends Model {
 
-    protected $table = 'userparkings';
+    protected $table = 'back_userparkings';
     protected $connection = 'cm_user';
     protected static $unguarded = true;
 
