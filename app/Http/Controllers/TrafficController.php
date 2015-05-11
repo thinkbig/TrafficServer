@@ -98,12 +98,15 @@ class TrafficController extends Controller {
 
     public function getAbstractuser()
     {
+        $udid = Request::input('udid');
+        if (!ToolUtil::checkUdid($udid)) {
+            ErrUtil::errResp(ErrUtil::err_authorize);
+        }
+
         $fromId = Request::input('fromId');
         $toId = Request::input('toId');
-        $uid = Request::input('uid');
-        $udid = Request::input('udid');
-        if (null == $udid || null == $fromId || null == $toId) {
-            return $this->getAbstractbaidu();
+        if (null == $fromId || null == $toId) {
+            return $this->abstractBaidu($udid);
         }
 
         $start = Request::input('start');
@@ -113,17 +116,17 @@ class TrafficController extends Controller {
             $startDate = ToolUtil::toDateTime($start);
         }
 
-        $bestRoute = $this->fetchBestJsonRoute($uid, $udid, $fromId, $toId, $startDate);
+        $bestRoute = $this->fetchBestJsonRoute($fromId, $toId, $startDate);
         if ($bestRoute) {
             $baiduRoute = json_decode($bestRoute);
             GeoTransform::convertRouteGps2Baidu($baiduRoute);
-            $javaResult = $this->requestInternalAbs(json_encode($baiduRoute), $startDate, 'baidu');
+            $javaResult = $this->requestInternalAbs($udid, json_encode($baiduRoute), $startDate, 'user', 'baidu');
             if ($javaResult) {
                 return ToolUtil::makeResp($javaResult);
             }
         } else {
             // 无法找到匹配的路径，尝试走百度api
-            return $this->getAbstractbaidu();
+            return $this->abstractBaidu($udid);
         }
 
         return ErrUtil::errResp(ErrUtil::err_java_internal);
@@ -131,13 +134,13 @@ class TrafficController extends Controller {
 
     public function getPredictuser()
     {
+        $udid = Request::input('udid');
+        if (!ToolUtil::checkUdid($udid)) {
+            ErrUtil::errResp(ErrUtil::err_authorize);
+        }
+
         $fromId = Request::input('fromId');
         $toId = Request::input('toId');
-        $uid = Request::input('uid');
-        $udid = Request::input('udid');
-        if (null == $udid) {
-            return ErrUtil::errResp(ErrUtil::err_bad_parameters);
-        }
 
         $bestRoute = null;
         if ($fromId && $toId) {
@@ -147,13 +150,13 @@ class TrafficController extends Controller {
             } else {
                 $startDate = ToolUtil::toDateTime($start);
             }
-            $bestRoute = $this->fetchBestJsonRoute($uid, $udid, $fromId, $toId, $startDate);
+            $bestRoute = $this->fetchBestJsonRoute($fromId, $toId, $startDate);
         }
 
         //http://121.43.230.8:8080/api/traffic/predictdeparturetime.s?PosFrom=120.00,30.1&PosTo=120.30,30.5
         $full_url = null;
         $coorType = 'baidu';
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/predictdeparturetime.s?coor=" . $coorType;
+        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/predictdeparturetime.s?coor=" . $coorType . "&udid=" . $udid;
 
         if ($bestRoute) {
             $baiduRoute = json_decode($bestRoute);
@@ -194,12 +197,15 @@ class TrafficController extends Controller {
 
     public function getFulluser()
     {
+        $udid = Request::input('udid');
+        if (!ToolUtil::checkUdid($udid)) {
+            ErrUtil::errResp(ErrUtil::err_authorize);
+        }
+
         $fromId = Request::input('fromId');
         $toId = Request::input('toId');
-        $uid = Request::input('uid');
-        $udid = Request::input('udid');
-        if (null == $udid || null == $fromId || null == $toId) {
-            return $this->getFullbaidu();
+        if (null == $fromId || null == $toId) {
+            return $this->fullBaidu($udid);
         }
 
         $start = Request::input('start');
@@ -209,66 +215,20 @@ class TrafficController extends Controller {
             $startDate = ToolUtil::toDateTime($start);
         }
 
-        $bestRoute = $this->fetchBestJsonRoute($uid, $udid, $fromId, $toId, $startDate);
+        $bestRoute = $this->fetchBestJsonRoute($fromId, $toId, $startDate);
         if ($bestRoute) {
             $baiduRoute = json_decode($bestRoute);
             GeoTransform::convertRouteGps2Baidu($baiduRoute);
-            $javaResult = $this->requestInternalFull(json_encode($baiduRoute), $startDate, 'baidu');
+            $javaResult = $this->requestInternalFull($udid, json_encode($baiduRoute), $startDate, 'user', 'baidu');
             if ($javaResult) {
                 return ToolUtil::makeResp($javaResult);
             }
         } else {
             // 无法找到匹配的路径，尝试走百度api
-            return $this->getFullbaidu();
+            return $this->fullBaidu($udid);
         }
 
         return ErrUtil::errResp(ErrUtil::err_java_internal);
-    }
-
-    public function getAbstractbaidu()
-    {
-        $from = Request::input('from');
-        $to = Request::input('to');
-
-        list($code, $bd_data) = $this->requestBaidu($from, $to);
-
-        if (ErrUtil::no_error != $code) {
-            return ErrUtil::errResp($code);
-        }
-
-        $jsonStr = json_encode($bd_data);
-        if ($jsonStr) {
-            $javaResult = $this->requestInternalAbs($jsonStr, new \DateTime(), 'baidu');
-            if ($javaResult) {
-                return ToolUtil::makeResp($javaResult);
-            }
-            return ErrUtil::errResp(ErrUtil::err_java_internal);
-        }
-
-        return ErrUtil::errResp(ErrUtil::err_baidu);
-    }
-
-    public function getFullbaidu()
-    {
-        $from = Request::input('from');
-        $to = Request::input('to');
-
-        list($code, $bd_data) = $this->requestBaidu($from, $to);
-
-        if (ErrUtil::no_error != $code) {
-            return ErrUtil::errResp($code);
-        }
-
-        $jsonStr = json_encode($bd_data);
-        if ($jsonStr) {
-            $javaResult = $this->requestInternalFull($jsonStr, new \DateTime(), 'baidu');
-            if ($javaResult) {
-                return ToolUtil::makeResp($javaResult);
-            }
-            return ErrUtil::errResp(ErrUtil::err_java_internal);
-        }
-
-        return ToolUtil::makeResp('服务异常，请稍后再试', -1);
     }
 
     public function postTrafficlight()
@@ -314,10 +274,12 @@ class TrafficController extends Controller {
             $result = $response->body->results;
             $trafficLight = isset($result->trafficLight) ? $result->trafficLight : null;
             $lights = array();
-            foreach ($trafficLight as $light) {
-                $location = isset($light->location) ? $light->location : null;
-                if (isset($location->lng) && isset($location->lat)) {
-                    $lights[] = ['lon' => $location->lng, 'lat' => $location->lat];
+            if (is_array($trafficLight)) {
+                foreach ($trafficLight as $light) {
+                    $location = isset($light->location) ? $light->location : null;
+                    if (isset($location->lng) && isset($location->lat)) {
+                        $lights[] = ['lon' => $location->lng, 'lat' => $location->lat];
+                    }
                 }
             }
 
@@ -325,6 +287,89 @@ class TrafficController extends Controller {
         }
 
         return ErrUtil::errResp(ErrUtil::err_general);
+    }
+
+    public function getJamszone()
+    {
+        $udid = Request::input('udid');
+        if (!ToolUtil::checkUdid($udid)) {
+            ErrUtil::errResp(ErrUtil::err_authorize);
+        }
+
+        $lonFromTo = Request::input('lonFromTo');
+        $latFromTo = Request::input('latFromTo');
+        if (null == $lonFromTo || null == $latFromTo) {
+            return ErrUtil::errResp(ErrUtil::err_bad_parameters);
+        }
+        $coor = Request::input('coor');
+        if (null == $coor) {
+            $coor = 'baidu';
+        }
+
+        $stTimtstamp = Request::input('start');
+        if (null == $stTimtstamp) {
+            $stTimtstamp = time();
+        }
+        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/jamsinzone.s?coor=" . $coor;
+        $internal_url = sprintf("%s&udid=%s&startDate=%u&lonFromTo=%s&latFromTo=%s", $internal_url, $udid, $stTimtstamp, $lonFromTo, $latFromTo);
+        $internal_resp = Httpful::get($internal_url)->expectsJson()->send();
+
+        if (200 == $internal_resp->code && isset($internal_resp->body->code) && 0 == $internal_resp->body->code) {
+            if (isset($internal_resp->body->data)) {
+                $data = $internal_resp->body->data;
+                return ToolUtil::makeResp($data);
+            }
+        }
+
+        return ErrUtil::errResp(ErrUtil::err_java_internal);
+    }
+
+
+
+    public function abstractBaidu($udid)
+    {
+        $from = Request::input('from');
+        $to = Request::input('to');
+
+        list($code, $bd_data) = $this->requestBaidu($from, $to);
+
+        if (ErrUtil::no_error != $code) {
+            return ErrUtil::errResp($code);
+        }
+
+        $jsonStr = json_encode($bd_data);
+        if ($jsonStr) {
+            $javaResult = $this->requestInternalAbs($udid, $jsonStr, new \DateTime(), 'baidu', 'baidu');
+            if ($javaResult) {
+                return ToolUtil::makeResp($javaResult);
+            }
+            return ErrUtil::errResp(ErrUtil::err_java_internal);
+        }
+
+        return ErrUtil::errResp(ErrUtil::err_baidu);
+    }
+
+    public function fullBaidu($udid)
+    {
+        $from = Request::input('from');
+        $to = Request::input('to');
+
+        list($code, $bd_data) = $this->requestBaidu($from, $to);
+
+        if (ErrUtil::no_error != $code) {
+            return ErrUtil::errResp($code);
+        }
+
+        $jsonStr = json_encode($bd_data);
+        if ($jsonStr) {
+            $javaResult = $this->requestInternalFull($udid, $jsonStr, new \DateTime(), 'baidu', 'baidu');
+            if ($javaResult) {
+                return ToolUtil::makeResp($javaResult);
+            }
+            return ErrUtil::errResp(ErrUtil::err_java_internal);
+        }
+
+        return ToolUtil::makeResp('服务异常，请稍后再试', -1);
     }
 
     private function requestBaidu($from, $to)
@@ -412,10 +457,11 @@ class TrafficController extends Controller {
         return array(ErrUtil::err_bad_parameters, null);
     }
 
-    private function requestInternalAbs($routeStr, $stDate, $coorType = 'gps')
+    private function requestInternalAbs($udid, $routeStr, $stDate, $source, $coorType)
     {
         $stTimtstamp = $stDate->getTimestamp();
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/abstract.s?coor=" . $coorType . "&startDate=" . $stTimtstamp;
+        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/abstract.s?coor=" . $coorType;
+        $internal_url = sprintf("%s&udid=%s&startDate=%u&source=%s", $internal_url, $udid, $stTimtstamp, $source);
         $json_body = $routeStr;
         $internal_resp = Httpful::post($internal_url)->body($json_body)->expectsJson()->send();
 
@@ -430,10 +476,11 @@ class TrafficController extends Controller {
         return null;
     }
 
-    private function requestInternalFull($routeStr, $stDate, $coorType = 'gps')
+    private function requestInternalFull($udid, $routeStr, $stDate, $source, $coorType)
     {
         $stTimtstamp = $stDate->getTimestamp();
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/full.s?coor=" . $coorType . "&startDate=" . $stTimtstamp;
+        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/full.s?coor=" . $coorType;
+        $internal_url = sprintf("%s&udid=%s&startDate=%u&source=%s", $internal_url, $udid, $stTimtstamp, $source);
         $json_body = $routeStr;
         $internal_resp = Httpful::post($internal_url)->body($json_body)->expectsJson()->send();
 
@@ -448,9 +495,9 @@ class TrafficController extends Controller {
         return null;
     }
 
-    private function fetchBestJsonRoute($uid, $udid, $fromId, $toId, $startDate)
+    private function fetchBestJsonRoute($fromId, $toId, $startDate)
     {
-        $trips = Trip::where(['user_id' => $uid, 'device_id' => $udid, 'st_parkingId' => $fromId, 'ed_parkingId' => $toId])
+        $trips = Trip::where(['st_parkingId' => $fromId, 'ed_parkingId' => $toId])
             ->whereNotNull('key_route')
             ->orderBy('st_date','DESC')
             ->take(8)
@@ -463,10 +510,15 @@ class TrafficController extends Controller {
             $isWeekend = FilterUtil::isWeekend($startDate);
             $passWeekFilter = false;
             $passTimeFilter = false;
+            $passQualityFilter = false;
             $avgDuration = 0;
             foreach ($trips as $trip)
             {
-                if (strlen($trip->key_route) < 10) {
+                if (strlen($trip->key_route) < 10 || $trip->total_during <= 0) {
+                    continue;
+                }
+                $avgSpeed = $trip->total_dist/$trip->total_during;
+                if ($avgSpeed < 5.0/3.6 || $avgSpeed > 300.0/3.6) {
                     continue;
                 }
 
@@ -485,24 +537,37 @@ class TrafficController extends Controller {
                     $passTimeFilter = abs($diff_minites) < 120;
                 }
 
+                // check quality
+                if (!$passQualityFilter) {
+                    $passQualityFilter = $trip->quality >= 1 && $trip->quality <= 2;
+                }
+
                 // calculate avgDuration
                 $avgDuration += $trip->total_during;
 
                 $filterArr[] = ['time_diff' => $diff_minites, 'weekend' => $weekend,
                     'distance' => $trip->total_dist, 'duration' => $trip->total_during,
-                    'route' => $trip->key_route];
+                    'quality' => $trip->quality, 'route' => $trip->key_route];
             }
             $avgDuration = $avgDuration/count($trips);
 
 //            usort($filterArr, function($a, $b){
-//                return ($a['duration'] < $b['duration']) ? -1 : 1;
+//                $qa = $a['quality'];
+//                $qb = $b['quality'];
+//                return ($qa < $qb) ? -1 : 1;
 //            });
 
+            if (count($filterArr) > 0) {
+                $bestRoute = $filterArr[0]['route'];
+            }
             foreach ($filterArr as $tripDict) {
                 if ($passWeekFilter && ($tripDict['weekend'] != $isWeekend)) {
                     continue;
                 }
                 if ($passTimeFilter && (abs($tripDict['time_diff']) >= 120)) {
+                    continue;
+                }
+                if ($passQualityFilter && ($tripDict['quality'] < 1 || $tripDict['quality'] > 2)) {
                     continue;
                 }
                 $curDuration = $tripDict['duration'];

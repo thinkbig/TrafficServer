@@ -2,6 +2,7 @@
 
 use Request;
 use App\Utils\ToolUtil;
+use Mail;
 
 class WelcomeController extends Controller {
 
@@ -48,6 +49,18 @@ class WelcomeController extends Controller {
         $type = $request->header('Content-Type');
 
         return ToolUtil::makeResp(["len1" => $rawLen, "len2" => $len, "encoding" => $encoding, "type" => $type]);
+    }
+
+    public function postMail()
+    {
+        Mail::raw('this is body', function($message)
+        {
+            $message->to('developer@carmap.me');
+
+            $message->subject('test1');
+        });
+
+        return null;
     }
 
 }

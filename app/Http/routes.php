@@ -11,10 +11,9 @@
 |
 */
 
-Route::get('/', 'WelcomeController@index');
-Route::post('welcome/gzip', 'WelcomeController@postGzip');
-
+Route::controller('welcome', 'WelcomeController');
 Route::get('home', 'HomeController@index');
+
 
 Route::controllers([
 	'auth' => 'Auth\AuthController',

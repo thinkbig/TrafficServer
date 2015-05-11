@@ -8,6 +8,7 @@
 
 use Response;
 use Httpful;
+use App\Models\Device;
 
 class ToolUtil
 {
@@ -99,5 +100,17 @@ class ToolUtil
         return $querystring_arrays;
     }
 
+    static public function checkUdid($udid)
+    {
+        if (!isset($udid) || null == $udid) {
+            return false;
+        }
+        $device = Device::where(['udid' => $udid])->first();
+        if ($device) {
+            // check redis for frequent
+            return true;
+        }
+        return false;
+    }
 
 }

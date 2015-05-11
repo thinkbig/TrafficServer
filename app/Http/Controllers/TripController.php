@@ -124,6 +124,7 @@ class TripController extends Controller {
             $tripObj->end_date = ToolUtil::toDateTime($jsonObj->end_date);
             $tripObj->st_parkingId = $jsonObj->st_parkingId;
             $tripObj->ed_parkingId = $jsonObj->ed_parkingId;
+            $tripObj->quality = (isset($jsonObj->quality) ? $jsonObj->quality : 0);
             $tripObj->total_dist = (isset($jsonObj->total_dist) ? $jsonObj->total_dist : 0);
             $tripObj->total_during = (isset($jsonObj->total_during) ? $jsonObj->total_during : 0);
             $tripObj->max_speed = (isset($jsonObj->max_speed) ? $jsonObj->max_speed : 0);
