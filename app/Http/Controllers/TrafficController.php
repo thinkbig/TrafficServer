@@ -156,7 +156,7 @@ class TrafficController extends Controller {
         //http://121.43.230.8:8080/api/traffic/predictdeparturetime.s?PosFrom=120.00,30.1&PosTo=120.30,30.5
         $full_url = null;
         $coorType = 'baidu';
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/predictdeparturetime.s?coor=" . $coorType . "&udid=" . $udid;
+        $internal_url = "http://" . env('BACKEND_SERVER') . "/api/traffic/predictdeparturetime.s?coor=" . $coorType . "&udid=" . $udid;
 
         if ($bestRoute) {
             $baiduRoute = json_decode($bestRoute);
@@ -310,7 +310,7 @@ class TrafficController extends Controller {
         if (null == $stTimtstamp) {
             $stTimtstamp = time();
         }
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/jamsinzone.s?coor=" . $coor;
+        $internal_url = "http://" . env('BACKEND_SERVER') . "/api/traffic/jamsinzone.s?coor=" . $coor;
         $internal_url = sprintf("%s&udid=%s&startDate=%u&lonFromTo=%s&latFromTo=%s", $internal_url, $udid, $stTimtstamp, $lonFromTo, $latFromTo);
         $internal_resp = Httpful::get($internal_url)->expectsJson()->send();
 
@@ -460,7 +460,7 @@ class TrafficController extends Controller {
     private function requestInternalAbs($udid, $routeStr, $stDate, $source, $coorType)
     {
         $stTimtstamp = $stDate->getTimestamp();
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/abstract.s?coor=" . $coorType;
+        $internal_url = "http://" . env('BACKEND_SERVER') . "/api/traffic/abstract.s?coor=" . $coorType;
         $internal_url = sprintf("%s&udid=%s&startDate=%u&source=%s", $internal_url, $udid, $stTimtstamp, $source);
         $json_body = $routeStr;
         $internal_resp = Httpful::post($internal_url)->body($json_body)->expectsJson()->send();
@@ -479,7 +479,7 @@ class TrafficController extends Controller {
     private function requestInternalFull($udid, $routeStr, $stDate, $source, $coorType)
     {
         $stTimtstamp = $stDate->getTimestamp();
-        $internal_url = "http://" . env('BACKEND_SERVER') . ":8080/api/traffic/full.s?coor=" . $coorType;
+        $internal_url = "http://" . env('BACKEND_SERVER') . "/api/traffic/full.s?coor=" . $coorType;
         $internal_url = sprintf("%s&udid=%s&startDate=%u&source=%s", $internal_url, $udid, $stTimtstamp, $source);
         $json_body = $routeStr;
         $internal_resp = Httpful::post($internal_url)->body($json_body)->expectsJson()->send();
